@@ -1,0 +1,1790 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>macros</title>
+  <style>
+    @font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-Regular.woff2") format("woff2"); font-style: normal; font-weight: 400; font-display: swap; }
+    :root { color-scheme: dark; font-family: "JetBrains Mono", monospace; font-size: 18px; font-weight: 700; color: #fff; background: #000; --muted: #fff; --line: #fff; --accent: #fff; --add: #4ade80; --remove: #ff6464; }
+    * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; scrollbar-width: none; }
+    ::-webkit-scrollbar { display: none; }
+    body { margin: 0; min-height: 100vh; background: #000; }
+    button, input, select, textarea { font: inherit; }
+    select, option, optgroup { font-family: inherit; font-weight: 700; }
+    strong { font-weight: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    :is(.key, .event-block:not(.event-condition))[aria-pressed="true"]:focus-visible { outline: none; }
+    .key[aria-pressed="true"]:focus-visible,
+    .event-block[aria-pressed="true"]:focus-visible .event-caption { text-decoration: underline; text-underline-offset: .2em; }
+    button { color: inherit; }
+    svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .app { max-width: 1480px; margin: auto; padding: 30px 36px 24px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 9px; font-size: 20px; font-weight: 650; letter-spacing: -.7px; }
+    .brand svg { width: 26px; height: 26px; color: var(--accent); }
+    .intro { text-align: center; margin: 69px 0 44px; }
+    h1 { font-size: clamp(1.875rem, 4.5vw, 2.75rem); letter-spacing: -1.8px; margin: 0 0 14px; }
+    .toolbar { display: flex; align-items: center; justify-content: flex-end; margin-bottom: 17px; gap: 12px; }
+    .toolbar-actions, .dialog-actions, .binding-options { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .positive, .button.positive { color: var(--add); border-color: var(--add); }
+    .negative, .button.negative { color: var(--remove); border-color: var(--remove); }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 10px 15px; min-height: 40px; border: 1px solid #fff; border-radius: 8px; background: #000; font-size: 0.75rem; transition: background .15s, border-color .15s; }
+    :is(button, select):enabled:hover { background: #333; }
+    button:disabled { cursor: default; opacity: .5; }
+    .button .count { border-inline-start: 1px solid currentColor; padding-inline-start: 9px; font-size: 0.625rem; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 278px; gap: 18px; align-items: stretch; }
+    .card { border: 1px solid var(--line); border-radius: 14px; background: #000; }
+    .keyboard-card { position: relative; isolation: isolate; padding: 20px; display: flex; flex-direction: column; min-width: 0; container-type: inline-size; touch-action: none; }
+    .card-heading { display: flex; align-items: center; justify-content: flex-end; }
+    h2 { font-size: 0.875rem; margin: 0; }
+    .layout-tag { position: relative; z-index: 2; color: #fff; background: #000; font-size: 0.6875rem; border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; cursor: pointer; }
+    .keyboard-view { padding: 28px 0; margin: auto 0; min-width: 0; }
+    .keyboard { --key-height: clamp(22px, 6cqw, 58px); --key-font: clamp(5px, 1.25cqw, 12px); --key-gap: clamp(2px, .6cqw, 5px); --section-gap: clamp(4px, 1.5cqw, 12px); min-width: 0; width: 100%; padding: var(--section-gap); background: #000; border: 1px solid #fff; border-radius: 11px; display: grid; gap: var(--section-gap); }
+    .keyboard[data-layout="TKL"] { --key-height: clamp(20px, 5cqw, 52px); --key-font: clamp(4px, 1.1cqw, 11px); grid-template-columns: minmax(0, 15fr) minmax(0, 3.1fr); }
+    .keyboard[data-layout="100%"] { --key-height: clamp(18px, 4.6cqw, 50px); --key-font: clamp(3px, 1cqw, 10px); grid-template-columns: minmax(0, 15fr) minmax(0, 3.1fr) minmax(0, 4.1fr); }
+    .keyboard-main { min-width: 0; }
+    .key-row { display: flex; gap: var(--key-gap); margin-bottom: var(--key-gap); }
+    .key-row:last-child { margin-bottom: 0; }
+    .key { position: relative; flex: var(--units, 1) 1 0; min-width: 0; height: var(--key-height); padding: 0; overflow: hidden; border: 1px solid #fff; border-bottom: 3px solid #fff; border-radius: 5px; background: #000; display: flex; align-items: center; justify-content: center; font-size: calc(var(--key-font) * 1.125); color: #fff; transition: background .12s; touch-action: none; }
+    .function-row { margin-bottom: var(--section-gap); }
+    .key-cluster { min-width: 0; display: grid; grid-template-rows: calc(var(--key-height) + var(--section-gap) - var(--key-gap)) repeat(5, var(--key-height)); gap: var(--key-gap); }
+    .navigation { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .numpad { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .key-cluster .key { height: 100%; font-size: calc(var(--key-font) * .9); }
+    .key-cluster .function-key { height: var(--key-height); }
+    .key.selected { background: #555; }
+    .key.selected:hover { background: #666; }
+    .key.bound::after { content: ""; width: clamp(4px, .8cqw, 8px); height: clamp(4px, .8cqw, 8px); border-radius: 50%; background: var(--add); position: absolute; bottom: clamp(2px, .6cqw, 5px); }
+    .key-symbol { display: flex; flex-direction: column; align-items: center; gap: clamp(1px, .3cqw, 3px); line-height: 1; }
+    .key-symbol small { color: #fff; font-size: .85em; }
+    .key.selected small { color: #fff; }
+    .key.wide { font-size: calc(var(--key-font) * .9); }
+    .key svg { width: 13px; height: 13px; }
+    .details { align-self: start; height: 420px; padding: 23px 22px; display: flex; flex-direction: column; min-width: 0; }
+    .deselect { align-self: flex-end; grid-column: 1 / -1; justify-self: end; padding: 5px; border: 0; border-radius: 4px; color: var(--remove); background: #000; font-size: 0.625rem; white-space: nowrap; }
+    .selection-box { position: absolute; z-index: 1; pointer-events: none; border: 1px solid #fff; background: #ffffff1a; }
+    .selection { display: flex; align-items: center; gap: 13px; padding: 22px 0; border-bottom: 1px solid var(--line); }
+    .selected-cap { display: grid; place-items: center; min-width: 52px; height: 52px; padding: 0 8px; border: 1px solid #fff; border-bottom: 3px solid #fff; border-radius: 7px; background: #000; color: var(--accent); font-size: 1.4375rem; }
+    .selection h2 { margin-bottom: 5px; }
+    .status { color: var(--muted); font-size: 0.6875rem; }
+    .empty-state { text-align: center; padding: 24px 0; margin: auto 0; }
+    .empty-icon { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; color: var(--add); margin: 0 auto 12px; }
+    h3 { font-size: 0.8125rem; margin: 0 0 8px; }
+    .empty-state p { color: var(--muted); font-size: 0.6875rem; line-height: 1.8; margin: 0; }
+    .primary { width: 100%; background: #000; color: var(--add); border-color: var(--add); }
+    .remove { width: 100%; margin-top: 10px; color: var(--remove); border-color: var(--remove); }
+    dialog { width: min(440px, calc(100% - 32px)); max-height: 85vh; overflow-y: auto; color: #fff; background: #000; border: 1px solid #fff; border-radius: 15px; padding: 25px; box-shadow: none; }
+    dialog::backdrop { background: #000b; backdrop-filter: blur(5px); }
+    .dialog-heading { display: flex; justify-content: space-between; align-items: center; }
+    .dialog-heading h2 { font-size: 1.1875rem; }
+    .close { border: 0; padding: 7px; background: #000; color: var(--muted); display: grid; place-items: center; border-radius: 5px; }
+    .dialog-copy { color: var(--muted); font-size: 0.75rem; line-height: 1.7; margin: 10px 0 20px; }
+    .close.negative { color: var(--remove); }
+    #delete-question { font-size: 1.125rem; line-height: 1.6; overflow-wrap: anywhere; }
+    #delete-confirmation .button { min-height: 48px; font-size: 1rem; }
+    .macro-option { width: 100%; text-align: left; display: flex; gap: 12px; align-items: center; border: 1px solid var(--line); background: #000; padding: 15px; border-radius: 8px; margin-top: 8px; }
+    .macro-option strong { display: block; font-size: 0.75rem; margin-bottom: 5px; }
+    .macro-option small { color: var(--muted); font-size: 0.6875rem; }
+    .key.unsupported { border-color: var(--remove); }
+    .macro-row { display: flex; gap: 6px; align-items: center; }
+    .macro-row .macro-option { flex: 1; min-width: 0; }
+    .macro-row .close { margin-top: 8px; font-size: 0.6875rem; }
+    .binding-options { margin: 15px 0; font-size: 0.6875rem; }
+    .binding-options label { display: flex; align-items: center; gap: 5px; }
+    input[type="checkbox"] { accent-color: var(--add); }
+    .field { display: grid; gap: 7px; margin: 15px 0; font-size: 0.6875rem; }
+    input:not([type="checkbox"]), textarea, .event-fields select { width: 100%; min-width: 0; padding: 10px; border: 1px solid #fff; border-radius: 6px; background: #000; color: #fff; font-size: 0.75rem; }
+    textarea { resize: vertical; }
+    #editor, #macro-form { display: flex; flex-direction: column; flex: 1; width: 100%; }
+    .macro-flow { display: flex; flex-direction: column; min-height: 100vh; }
+    .flow-header, .macro-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .flow-progress { display: flex; gap: 22px; margin: 24px 0 30px; padding: 0; list-style: none; font-size: 0.6875rem; }
+    .flow-progress li { padding-bottom: 9px; border-bottom: 1px solid #555; color: #aaa; }
+    .flow-progress li[aria-current="step"] { color: #fff; border-color: #fff; }
+    .events-page .flow-header .button, #editor .button:not(.event-add) { min-height: 56px; padding: 14px 22px; font-size: 1.125rem; }
+    .events-page .flow-progress { gap: 32px; font-size: 1rem; }
+    .setup-page { width: 100%; max-width: 720px; margin: clamp(40px, 10vh, 100px) auto; }
+    .setup-page h1 { font-size: 2.125rem; letter-spacing: -1px; }
+    .setup-page .field { margin: 30px 0 20px; }
+    .setup-page input { padding: 14px; font-size: 1rem; }
+    #macro-type-page { text-align: center; }
+    #type-title:focus { outline: none; }
+    .type-options { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; max-width: 560px; margin: 28px auto 0; }
+    .type-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 200px; padding: 28px; border: 1px solid #777; border-radius: 10px; background: #000; text-align: center; }
+    .type-card:enabled:hover { border-color: #fff; }
+    .type-card strong { font-size: 1.3125rem; }
+    .type-card svg { width: 64px; height: 64px; }
+    .macro-heading h1 { font-size: 2.5rem; letter-spacing: -.8px; margin: 0; overflow-wrap: anywhere; }
+    .macro-kind { border: 1px solid #777; border-radius: 5px; padding: 10px 16px; font-size: 1rem; white-space: nowrap; }
+    .builder-intro { margin-bottom: 18px; }
+    .builder-workspace { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 40px; margin-top: 32px; }
+    .builder-workspace.has-event-fields { grid-template-columns: minmax(0, 1fr) 320px; }
+    .sequence-panel { min-width: 0; }
+    .record-bar, .builder-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .record-status { color: var(--remove); font-size: 1.125rem; line-height: 1.7; }
+    .event-sequence { display: flex; flex-wrap: wrap; align-items: start; gap: 30px 24px; padding: 28px 6px 8px; }
+    .event-block { display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 80px; max-width: 100%; padding: 0; border: 0; background: transparent; text-align: center; cursor: grab; }
+    .event-block:enabled:hover { background: transparent; }
+    .event-visual { display: grid; place-items: center; min-width: 80px; height: 80px; padding: 12px; border: 1px solid #fff; border-bottom: 4px solid #fff; border-radius: 8px; background: #000; color: #fff; font-size: 1.625rem; }
+    .event-block[aria-pressed="false"]:enabled:hover .event-visual { background: #222; }
+    .event-block[aria-pressed="true"] .event-visual { background: #333; }
+    .event-block.drop-before { box-shadow: -3px 0 var(--add); }
+    .event-block.dragging { opacity: .4; }
+    .event-chord { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; }
+    .event-key { min-width: 80px; }
+    .event-key.wide { max-width: 160px; font-size: 1rem; overflow-wrap: anywhere; }
+    .event-caption { font-size: 0.8125rem; line-height: 1.5; }
+    .event-visual svg { width: 48px; height: 54px; stroke-width: 2; }
+    .event-mouse .mouse-button { fill: #fff; stroke: none; }
+    .event-mouse .mouse-wheel { stroke: #000; }
+    .event-delay { gap: 2px; min-width: 90px; font-size: 1.5rem; }
+    .event-delay small { font-size: 0.8125rem; }
+    .event-text { width: 176px; text-align: left; font-size: 1rem; line-height: 1.5; }
+    .event-text-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .event-image { width: 112px; padding: 6px; }
+    .event-image img, .image-entry img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+    .event-image-caption { max-width: 160px; overflow-wrap: anywhere; }
+    .event-flow { display: grid; flex-basis: 100%; gap: 10px; min-width: 0; }
+    .event-condition { justify-self: start; flex-direction: row; align-items: baseline; gap: 10px; min-width: 0; min-height: 44px; padding: 8px; margin-inline-start: -8px; border-radius: 6px; text-align: start; }
+    .event-condition:enabled:hover, .event-condition[aria-pressed="true"] { background: #222; }
+    .event-condition-keyword { flex: none; color: #facc15; font-size: 1.25rem; }
+    .event-condition-summary { min-width: 0; overflow-wrap: anywhere; }
+    .event-condition-image { color: #22d3ee; }
+    .event-branches { display: grid; gap: 16px; min-width: 0; margin-inline-start: 6px; padding-inline-start: min(3%, 20px); border-inline-start: 1px solid #777; }
+    .event-branch { container-type: inline-size; min-width: 0; }
+    .event-branch-label { margin: 0 0 8px; font-size: 1rem; }
+    .event-branch > .event-sequence { gap: 18px 16px; padding: 0; }
+    @container (max-width: 350px) { .event-branches { margin-inline-start: 0; padding-inline-start: 0; border-inline-start: 0; } }
+    .event-picker.drop-before { box-shadow: -3px 0 var(--add); }
+    .event-add { width: 80px; height: 80px; }
+    .event-add svg { width: 44px; height: 44px; stroke-width: 2; }
+    .event-branch .event-add { width: 52px; min-width: 0; height: 52px; padding: 6px; }
+    .event-branch .event-add svg { width: 28px; height: 28px; }
+    .event-picker { position: relative; }
+    .event-menu { position: absolute; z-index: 3; top: calc(100% + 8px); left: 0; display: flex; flex-direction: column; min-width: 240px; padding: 8px; border: 1px solid #fff; border-radius: 8px; background: #000; }
+    .event-menu-options { display: grid; gap: 6px; overflow-y: auto; overscroll-behavior-y: contain; }
+    .event-menu[data-scrollable]::before, .event-menu[data-scrollable]::after {
+      content: ""; align-self: center; flex: none; margin: 4px 0; border-inline: 6px solid transparent; visibility: hidden;
+    }
+    .event-menu[data-scrollable]::before { border-bottom: 6px solid currentColor; }
+    .event-menu[data-scrollable]::after { border-top: 6px solid currentColor; }
+    .event-menu[data-more-above]::before, .event-menu[data-more-below]::after { visibility: visible; }
+    .event-menu button { min-height: 54px; padding: 14px 18px; border: 0; border-radius: 4px; background: transparent; color: #fff; font-size: 1.125rem; text-align: left; }
+    .event-menu button:focus-visible { outline-offset: 0; }
+    .recording-menu { min-width: 380px; }
+    .recording-menu label { display: flex; align-items: center; gap: 14px; padding: 14px; font-size: 1.125rem; white-space: nowrap; cursor: pointer; }
+    .recording-menu input[type="checkbox"] { width: 22px; height: 22px; margin: 0; flex-shrink: 0; }
+    .event-inspector { position: sticky; top: 24px; min-width: 0; }
+    .event-fields .field { gap: 10px; margin: 20px 0 0; font-size: 1rem; }
+    .event-fields input, .event-fields select, .event-fields textarea { min-height: 56px; padding: 14px; font-size: 1.125rem; }
+    .event-fields textarea { min-height: 140px; }
+    .event-fields .button { width: 100%; margin-top: 14px; }
+    .record-bar { justify-content: flex-start; flex-wrap: wrap; margin: 24px 0 0; }
+    .record-tools { display: flex; gap: 12px; }
+    .recording-menu label:has(input:disabled) { opacity: .5; cursor: default; }
+    .builder-footer { justify-content: center; margin-top: auto; padding-top: 32px; }
+    @media (max-width: 760px) { .builder-workspace, .builder-workspace.has-event-fields { grid-template-columns: minmax(0, 1fr); gap: 32px; } .event-inspector { position: static; } .type-options { grid-template-columns: 1fr; } }
+    @media (max-height: 780px) { .macro-flow .flow-progress { margin: 14px 0 20px; } }
+    .dialog-actions { justify-content: space-between; margin-top: 18px; }
+    .empty-library { padding: 20px 0; font-size: 0.75rem; }
+    #images-dialog { width: min(660px, calc(100% - 32px)); }
+    .image-tools { margin: 16px 0; }
+    .image-entry { display: grid; grid-template-columns: 100px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid #555; }
+    .image-entry img { height: 64px; }
+    .image-rename { display: flex; gap: 8px; }
+    .image-rename input { min-width: 0; flex: 1; }
+    #images-status[data-error="true"] { color: var(--remove); }
+    @media (max-width: 520px) { .image-entry { grid-template-columns: 54px minmax(0, 1fr) auto; } .image-rename { flex-wrap: wrap; } .image-rename input { width: 100%; flex-basis: 100%; } }
+    .toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); color: #fff; background: #000; border: 1px solid #fff; padding: 12px 20px; border-radius: 8px; font-size: 0.75rem; box-shadow: none; }
+    .toast[data-tone="error"] { color: var(--remove); }
+    .toast[data-tone="success"] { color: var(--add); }
+    #recovery-notice { padding: 12px 16px; margin-bottom: 16px; font-size: 0.75rem; line-height: 1.5; }
+    #save-recovered { margin-top: 8px; }
+    [hidden] { display: none !important; }
+    @media (min-width: 1400px) { .app { padding-top: 40px; } .intro { margin-top: 85px; margin-bottom: 52px; } }
+    @media (max-width: 960px) { .app { padding: 24px; } .workspace { grid-template-columns: minmax(0, 1fr); } .details { height: 280px; display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; align-items: center; } .selection { border-bottom: 0; } .empty-state { grid-column: 2; padding: 12px 0; } .empty-icon { display: none; } .primary, .remove { grid-column: 1 / -1; } .intro { margin-top: 45px; } }
+    @media (max-width: 580px) { .app { padding: 20px 14px; } .intro { margin: 42px 0 32px; } .keyboard-card { padding: 17px 12px; } .keyboard-view { padding: 23px 0; } .details { padding: 20px; gap: 0 12px; } .selection { gap: 9px; } .selection h2, h3 { font-size: 0.75rem; } .empty-state p { font-size: 0.625rem; } }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app" id="keyboard-page">
+    <header class="topbar">
+      <div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a6.5 6.5 0 0 1-13 0V9Zm13 1h1a3 3 0 0 1 0 6h-1M3 21h16M8 3v3m5-4v4"/></svg>tea</div>
+    </header>
+    <main>
+      <div class="intro">
+        <h1>macros</h1>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-actions"><button class="button negative" id="stop-playback" hidden>stop playback</button><button class="button negative" id="stop-hotkey">stop hotkey: esc</button><button class="button positive" id="record-hotkey">record hotkey: not set</button><button class="button" id="open-macros">macros <span class="count" id="macro-count">0</span></button></div>
+      </div>
+      <section class="card" id="recovery-notice" aria-label="data recovery" hidden>
+        <p id="configuration-recovery" role="status" hidden></p>
+        <p id="images-recovery" role="status" hidden></p>
+        <button class="button" id="save-recovered" hidden>save recovered configuration</button>
+      </section>
+      <div class="workspace">
+        <section class="card keyboard-card" id="keyboard-panel" aria-label="keyboard">
+          <div class="card-heading"><select class="layout-tag" id="layout" aria-label="keyboard form factor"><option value="60%">60%</option><option value="65%">65%</option><option value="75%">75%</option><option value="TKL">tkl (80%)</option><option value="100%">100%</option></select></div>
+          <div class="keyboard-view" role="region" aria-label="keyboard layout"><div class="keyboard" id="keyboard" role="group" aria-label="choose keys"></div></div>
+          <div class="selection-box" id="selection-box" aria-hidden="true" hidden></div>
+        </section>
+        <aside class="card details" aria-label="key assignments">
+          <button class="deselect" id="deselect" hidden>deselect all</button>
+          <div class="selection"><div class="selected-cap" id="selected-cap">0</div><div><h2 id="selected-name">0 keys selected</h2><span class="status" id="selected-status">0 assigned</span></div></div>
+          <div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div><h3 id="macro-title">select a key</h3><p id="macro-description"></p></div>
+          <button class="button primary" id="assign" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span id="assign-label">assign macro</span></button>
+          <button class="button remove" id="remove" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg><span id="remove-label">remove assignment</span></button>
+        </aside>
+      </div>
+    </main>
+  </div>
+  <dialog id="macros" aria-labelledby="macros-title">
+    <div class="dialog-heading"><h2 id="macros-title">your macros</h2><button class="close" id="close-macros" aria-label="close macros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
+    <p class="dialog-copy" id="dialog-copy"></p>
+    <div class="binding-options" id="binding-options"><label><input type="checkbox" id="mod-ctrl">ctrl</label><label><input type="checkbox" id="mod-alt">alt</label><label><input type="checkbox" id="mod-shift">shift</label><label><input type="checkbox" id="replace-input">replace normal input</label></div>
+    <div id="macro-list"></div>
+    <div class="dialog-actions"><button class="button positive" id="new-macro">+ new macro</button></div>
+  </dialog>
+  <main class="app macro-flow" id="macro-flow" hidden>
+    <header class="flow-header"><button class="button" id="flow-back">&#8592; back</button><button class="button negative" id="close-editor">cancel</button></header>
+    <ol class="flow-progress" aria-label="macro creation"><li data-flow-step="name">name</li><li data-flow-step="type">type</li><li data-flow-step="events">events</li></ol>
+    <section class="setup-page" id="macro-name-page" aria-labelledby="name-title" hidden>
+      <h1 id="name-title">macro name</h1>
+      <form id="macro-name-form"><div class="field"><input id="macro-name" aria-labelledby="name-title" maxlength="128" placeholder="macro name" required autocomplete="off"></div><button class="button positive" type="submit">continue &#8594;</button></form>
+    </section>
+    <section class="setup-page" id="macro-type-page" aria-labelledby="type-title" hidden>
+      <h1 id="type-title" tabindex="-1">macro type</h1>
+      <div class="type-options"><button class="type-card" data-macro-type="no-repeat"><strong>no repeat</strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16m-6-6 6 6-6 6"/></svg></button><button class="type-card" data-macro-type="toggle"><strong>toggle</strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.8 0 5.5 1.1 7.5 3L21 9m0-6v6h-6"/></svg></button></div>
+    </section>
+    <section id="editor" aria-labelledby="editor-title" hidden>
+    <form id="macro-form">
+      <div class="builder-intro"><div class="macro-heading"><h1 id="editor-title" tabindex="-1">new macro</h1><span class="macro-kind" id="editor-type">no repeat</span></div></div>
+      <div class="record-bar">
+        <div class="event-picker">
+          <button class="button" type="button" id="record-settings" aria-expanded="false" aria-controls="record-settings-menu" aria-haspopup="true">recording settings</button>
+          <div class="event-menu recording-menu" id="record-settings-menu" role="group" aria-label="recording settings" hidden>
+            <div class="event-menu-options">
+              <label><input type="checkbox" id="record-delays" data-record-option="delays" checked>record delays</label>
+              <label><input type="checkbox" id="record-keyboard" data-record-option="keyboard" checked>record keystrokes</label>
+              <label><input type="checkbox" id="record-split-keys" data-record-option="splitKeyEvents">split key down / release</label>
+              <label><input type="checkbox" id="record-mouse" data-record-option="mouseButtons" checked>record mouse clicks</label>
+              <label><input type="checkbox" id="record-position" data-record-option="clickPosition">mouse click with position</label>
+            </div>
+          </div>
+        </div>
+        <div class="record-tools">
+          <button class="button" type="button" id="open-images" aria-haspopup="dialog" aria-controls="images-dialog">images</button>
+          <div class="event-picker">
+            <button class="button" type="button" id="conditionals" aria-haspopup="menu" aria-expanded="false" aria-controls="conditionals-menu">conditionals</button>
+            <div class="event-menu" id="conditionals-menu" role="menu" aria-label="conditional events" hidden>
+              <div class="event-menu-options">
+                <button type="button" role="menuitem" data-add-event="if-else">if / else</button>
+                <button type="button" role="menuitem" data-add-event="while">while</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <span class="record-status" id="record-status" role="status"></span>
+      </div>
+      <div class="builder-workspace">
+        <section class="sequence-panel" aria-label="event sequence">
+          <div class="event-sequence" id="steps" role="group" aria-label="events in playback order">
+            <div class="event-picker" id="event-adder">
+              <button class="button positive event-visual event-add" type="button" id="add-event" aria-label="add event" aria-haspopup="menu" aria-expanded="false" aria-controls="add-event-menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+              <div class="event-menu" id="add-event-menu" role="menu" aria-label="add event" hidden>
+                <div class="event-menu-options">
+                  <button type="button" role="menuitem" data-add-event="key">keystroke</button>
+                  <button type="button" role="menuitem" data-add-event="mouse">mouse click</button>
+                  <button type="button" role="menuitem" data-record-inputs>record inputs</button>
+                  <button type="button" role="menuitem" data-add-event="text">text</button>
+                  <button type="button" role="menuitem" data-add-event="wait">delay</button>
+                  <button type="button" role="menuitem" data-add-event="wait-for-image">wait for image</button>
+                  <button type="button" role="menuitem" data-add-event="move">mouse move</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="event-inspector" aria-label="event properties" hidden><div class="event-fields" id="event-fields"></div></aside>
+      </div>
+      <div class="builder-footer"><button class="button positive" type="submit" id="save-macro">save macro</button></div>
+    </form>
+    </section>
+  </main>
+  <dialog id="images-dialog" aria-labelledby="images-title">
+    <div class="dialog-heading"><h2 id="images-title">images</h2><button class="button" type="button" id="close-images">close</button></div>
+    <div class="toolbar-actions image-tools">
+      <button class="button positive" type="button" id="import-image">upload image</button>
+      <button class="button positive" type="button" id="capture-image">capture screen</button>
+    </div>
+    <p class="status" id="images-status" role="status" hidden></p>
+    <p class="empty-library" id="images-empty">no images yet</p>
+    <div id="image-list"></div>
+  </dialog>
+  <dialog id="stop-picker" aria-labelledby="stop-title">
+    <div class="dialog-heading"><h2 id="stop-title">stop hotkey</h2><button class="close" id="close-stop" aria-label="cancel stop hotkey selection">cancel</button></div>
+    <p class="dialog-copy" id="hotkey-copy">press a single key to stop all running macros. choose a key that is not assigned to a macro.</p>
+  </dialog>
+  <dialog id="delete-confirmation" role="alertdialog" aria-labelledby="delete-question" aria-describedby="delete-details">
+    <h2 id="delete-question"></h2>
+    <p class="dialog-copy" id="delete-details" hidden></p>
+    <form method="dialog" class="dialog-actions"><button class="button" id="cancel-deletion" value="cancel" autofocus>cancel</button><button class="button negative" id="confirm-deletion" value="delete">delete</button></form>
+  </dialog>
+  <div class="toast" role="status" id="toast" hidden></div>
+  <script>
+    const rows = [
+      [['Esc', 1], ['1', 1, '!'], ['2', 1, '@'], ['3', 1, '#'], ['4', 1, '$'], ['5', 1, '%'], ['6', 1, '^'], ['7', 1, '&'], ['8', 1, '*'], ['9', 1, '('], ['0', 1, ')'], ['-', 1, '_'], ['=', 1, '+'], ['Backspace', 2]],
+      [['Tab', 1.5], ...'QWERTYUIOP'.split('').map(key => [key]), ['[', 1, '{'], [']', 1, '}'], ['\\', 1.5, '|']],
+      [['Caps Lock', 1.8], ...'ASDFGHJKL'.split('').map(key => [key]), [';', 1, ':'], ["'", 1, '"'], ['Enter', 2.2]],
+      [['Shift', 2.3], ...'ZXCVBNM'.split('').map(key => [key]), [',', 1, '<'], ['.', 1, '>'], ['/', 1, '?'], ['Shift', 2.7]],
+      [['Ctrl', 1.3], ['Win', 1.3], ['Alt', 1.3], ['Space', 6], ['Alt', 1.3], ['Fn', 1.2], ['Menu', 1.3], ['Ctrl', 1.3]]
+    ];
+    let state = { version: 1, enabled: true, stopKey: 27, macros: [], bindings: [] };
+    let macros = [];
+    const bindings = new Map();
+    const elements = Object.fromEntries([...document.querySelectorAll('[id]')].map(element => [element.id, element]));
+    const keyButtons = new Map();
+    const selectedKeys = new Set();
+    let drag = null;
+    let toastTimer;
+    let editingId = null;
+    let flowStep = null;
+    let flowReturnToMacros = false;
+    let macroName = '';
+    let macroType = 'no-repeat';
+    let editorActions = [];
+    let selectedSequence = editorActions;
+    let selectedEvent = -1;
+    let inspectedAction = null;
+    const eventLocations = new WeakMap();
+    let recording = false;
+    let recordingPending = false;
+    let recordingSession = null;
+    let nextRecordingSession = 0;
+    let eventDrag = null;
+    let hotkeyCapture = null;
+    let nextCaptureId = 0;
+    let requestId = 0;
+    let saving = false;
+    let playback = { active: false, paused: false };
+    let images = [];
+    let imageBusy = false;
+    let deletionPending = false;
+    const imagePreviews = new Map();
+    let optionSave = Promise.resolve();
+    const pending = new Map();
+    const native = window.chrome?.webview;
+    let openMenu = null;
+    const keyCodes = Object.fromEntries([
+      ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('').map(key => [key, key.charCodeAt(0)]),
+      ...Array.from({ length: 12 }, (_, index) => [`F${index + 1}`, 112 + index]),
+      ['Esc', 27], ['Tab', 9], ['Caps Lock', 20], ['Enter', 13], ['Backspace', 8], ['Space', 32],
+      ['Left Shift', 160], ['Right Shift', 161], ['Left Ctrl', 162], ['Right Ctrl', 163],
+      ['Left Alt', 164], ['Right Alt', 165], ['Left Win', 91], ['Right Win', 92], ['Fn', 0], ['Menu', 93],
+      ['Insert', 45], ['Delete', 46], ['Home', 36], ['End', 35], ['PgUp', 33], ['PgDn', 34],
+      ['Left', 37], ['Up', 38], ['Right', 39], ['Down', 40], ['PrtSc', 44], ['ScrLk', 145], ['Pause', 19],
+      [';', 186], ['=', 187], [',', 188], ['-', 189], ['.', 190], ['/', 191], ['`', 192], ['[', 219], ['\\', 220], [']', 221], ["'", 222],
+      ...Array.from({ length: 10 }, (_, index) => [`Numpad ${index}`, 96 + index]),
+      ['Numpad Num', 144], ['Numpad /', 111], ['Numpad *', 106], ['Numpad -', 109],
+      ['Numpad +', 107], ['Numpad .', 110], ['Numpad Enter', 269]
+    ]);
+
+    function supportedKey(key) {
+      return keyCodes[key] && keyCodes[key] !== state.stopKey && keyCodes[key] !== state.recordKey && !['Esc', 'F12', 'Fn', 'Left Shift', 'Right Shift', 'Left Ctrl', 'Right Ctrl', 'Left Alt', 'Right Alt', 'Left Win', 'Right Win'].includes(key);
+    }
+
+    async function request(command, data = {}, timeout = 5000) {
+      if (!native) {
+        if (command === 'state') {
+          const saved = localStorage.getItem('tea-macros');
+          const value = saved ? JSON.parse(saved) : state;
+          if (!value.stopKey) { value.stopKey = 27; localStorage.setItem('tea-macros', JSON.stringify(value)); }
+          return value;
+        }
+        if (command === 'save') { localStorage.setItem('tea-macros', JSON.stringify(data.state)); return data.state; }
+        if (command === 'image-library') return [];
+        if (command === 'import-image' || command === 'start-image-capture') throw new Error('open tea.exe to add images.');
+        throw new Error('open tea.exe to listen for keys.');
+      }
+      return new Promise((resolve, reject) => {
+        const id = ++requestId;
+        const timer = timeout && setTimeout(() => { pending.delete(id); reject(new Error('tea did not respond.')); }, timeout);
+        pending.set(id, { resolve, reject, timer });
+        native.postMessage({ id, command, ...data });
+      });
+    }
+
+    function applyState(next) {
+      state = next;
+      macros = state.macros;
+      bindings.clear();
+      state.bindings.forEach(binding => bindings.set(binding.key, binding));
+      elements['macro-count'].textContent = macros.length;
+      elements['stop-hotkey'].textContent = `stop hotkey: ${hotkeyName(state.stopKey)}`;
+      elements['record-hotkey'].textContent = `record hotkey: ${hotkeyName(state.recordKey)}`;
+      const options = { delays: true, keyboard: true, mouseButtons: true, splitKeyEvents: false, ...state.recordingOptions };
+      options.clickPosition = !!options.mouseButtons && (options.clickPosition ?? options.mouseMovement ?? false);
+      document.querySelectorAll('[data-record-option]').forEach(control => control.checked = options[control.dataset.recordOption]);
+      elements['new-macro'].disabled = !state.stopKey;
+      const layout = state.layout || '60%';
+      if (elements.layout.value !== layout) { elements.layout.value = layout; renderKeyboard(); }
+      renderSelection();
+      renderMacros();
+      updateRecordingControls(); renderEvents();
+    }
+
+    function hotkeyName(code) {
+      return Object.keys(keyCodes).find(key => keyCodes[key] === code)?.toLowerCase() || (code ? `key ${code}` : 'not set');
+    }
+
+    function recordingOptions() {
+      return Object.fromEntries([...document.querySelectorAll('[data-record-option]')].map(control => [control.dataset.recordOption, control.checked]));
+    }
+
+    async function commit(next) {
+      if (saving) throw new Error('wait for the current change to finish.');
+      saving = true;
+      try { applyState(await request('save', { state: next })); }
+      finally { saving = false; }
+    }
+
+    function applyRecoveryStatus({ configuration = '', images = '' }) {
+      elements['configuration-recovery'].textContent = configuration;
+      elements['images-recovery'].textContent = images;
+      elements['configuration-recovery'].hidden = elements['save-recovered'].hidden = !configuration;
+      elements['images-recovery'].hidden = !images;
+      elements['recovery-notice'].hidden = !configuration && !images;
+    }
+
+    function nextState() { return JSON.parse(JSON.stringify(state)); }
+
+    const functionKeys = [['Esc'], ...Array.from({ length: 12 }, (_, index) => [`F${index + 1}`])];
+    const arrows = { Up: '↑', Left: '←', Down: '↓', Right: '→' };
+
+    function createKey([label, units = 1, symbol], id = label) {
+      const key = document.createElement('button');
+      key.dataset.key = id;
+      key.className = `key${units > 1 || label.length > 2 ? ' wide' : ''}`;
+      key.style.setProperty('--units', units);
+      key.setAttribute('aria-label', `${id.toLowerCase()} key`);
+      if (symbol) {
+        const symbols = document.createElement('span');
+        symbols.className = 'key-symbol';
+        const upper = document.createElement('small');
+        upper.textContent = symbol;
+        symbols.append(upper, document.createTextNode(label));
+        key.append(symbols);
+      } else {
+        key.textContent = arrows[label] || (label === 'Backspace' ? '⌫' : label === 'Enter' ? '↵' : label === 'Space' ? '' : label.toLowerCase());
+      }
+      key.addEventListener('click', event => {
+        if (event.detail !== 0 || event.pointerType) return;
+        if (event.ctrlKey || event.metaKey) {
+          if (selectedKeys.has(id)) selectedKeys.delete(id);
+          else selectedKeys.add(id);
+        } else {
+          selectedKeys.clear();
+          selectedKeys.add(id);
+        }
+        renderSelection();
+      });
+      keyButtons.set(id, key);
+      return key;
+    }
+
+    function addRow(parent, keys, functionRow = false) {
+      const row = document.createElement('div');
+      const modifiers = new Set();
+      row.className = `key-row${functionRow ? ' function-row' : ''}`;
+      keys.forEach(key => {
+        const label = key[0];
+        const id = ['Shift', 'Ctrl', 'Alt', 'Win'].includes(label) ? `${modifiers.has(label) ? 'Right' : 'Left'} ${label}` : label;
+        modifiers.add(label);
+        row.append(createKey(key, id));
+      });
+      parent.append(row);
+    }
+
+    function addCluster(name, keys) {
+      const cluster = document.createElement('div');
+      cluster.className = `key-cluster ${name}`;
+      keys.forEach(([label, row, column, width = 1, height = 1]) => {
+        const key = createKey([label], name === 'numpad' ? `Numpad ${label}` : label);
+        key.style.gridRow = `${row + 1} / span ${height}`;
+        key.style.gridColumn = `${column + 1} / span ${width}`;
+        if (row === 0) key.classList.add('function-key');
+        cluster.append(key);
+      });
+      elements.keyboard.append(cluster);
+    }
+
+    function renderKeyboard() {
+      endDrag();
+      const hadSelection = selectedKeys.size > 0;
+      const layout = elements.layout.value;
+      const compact = layout === '65%' || layout === '75%';
+      const expanded = layout === 'TKL' || layout === '100%';
+      const keys = rows.map(row => row.map(key => [...key]));
+      elements.keyboard.replaceChildren();
+      elements.keyboard.dataset.layout = layout;
+      keyButtons.clear();
+      const main = document.createElement('div');
+      main.className = 'keyboard-main';
+      if (layout === '75%' || expanded) {
+        keys[0][0] = ['`', 1, '~'];
+        addRow(main, functionKeys, true);
+      }
+      if (compact) {
+        [['Delete'], ['Home'], ['PgUp']].forEach((key, index) => keys[index].push(key));
+        keys[3][keys[3].length - 1][1] = 1.7;
+        keys[3].push(['Up'], ['PgDn']);
+        keys[4] = [['Ctrl', 1.3], ['Win', 1.3], ['Alt', 1.3], ['Space', 7.1], ['Alt'], ['Fn'], ['Left'], ['Down'], ['Right']];
+      }
+      if (expanded) keys[4][5] = ['Win', 1.2];
+      keys.forEach(row => addRow(main, row));
+      elements.keyboard.append(main);
+      if (expanded) addCluster('navigation', [
+        ['PrtSc', 0, 0], ['ScrLk', 0, 1], ['Pause', 0, 2],
+        ['Insert', 1, 0], ['Home', 1, 1], ['PgUp', 1, 2],
+        ['Delete', 2, 0], ['End', 2, 1], ['PgDn', 2, 2],
+        ['Up', 4, 1], ['Left', 5, 0], ['Down', 5, 1], ['Right', 5, 2]
+      ]);
+      if (layout === '100%') addCluster('numpad', [
+        ['Num', 1, 0], ['/', 1, 1], ['*', 1, 2], ['-', 1, 3],
+        ['7', 2, 0], ['8', 2, 1], ['9', 2, 2], ['+', 2, 3, 1, 2],
+        ['4', 3, 0], ['5', 3, 1], ['6', 3, 2],
+        ['1', 4, 0], ['2', 4, 1], ['3', 4, 2], ['Enter', 4, 3, 1, 2],
+        ['0', 5, 0, 2], ['.', 5, 2]
+      ]);
+      for (const key of selectedKeys) if (!keyButtons.has(key)) selectedKeys.delete(key);
+      if (hadSelection && !selectedKeys.size) selectedKeys.add('K');
+      renderSelection();
+    }
+
+    function renderSelection() {
+      const count = selectedKeys.size;
+      const singleKey = count === 1 ? [...selectedKeys][0] : null;
+      const assigned = [...selectedKeys].filter(key => bindings.has(key));
+      const macroIds = new Set(assigned.map(key => bindings.get(key).macroId));
+      const macro = assigned.length === count && macroIds.size === 1 ? macros.find(macro => macro.id === [...macroIds][0]) : null;
+      keyButtons.forEach((button, key) => {
+        button.classList.toggle('selected', selectedKeys.has(key));
+        button.classList.toggle('bound', bindings.has(key));
+        button.classList.toggle('stop-key', keyCodes[key] === state.stopKey);
+        button.classList.toggle('unsupported', !supportedKey(key));
+        button.setAttribute('aria-pressed', String(selectedKeys.has(key)));
+        const boundMacro = macros.find(macro => macro.id === bindings.get(key)?.macroId);
+        button.setAttribute('aria-label', `${key.toLowerCase()} key, ${keyCodes[key] === state.stopKey ? 'stop hotkey' : keyCodes[key] === state.recordKey ? 'record hotkey' : boundMacro ? boundMacro.name : 'unassigned'}`);
+      });
+      elements['selected-cap'].textContent = singleKey ? singleKey.replace(/^(Left|Right) /, '').toLowerCase() : count;
+      elements['selected-cap'].style.fontSize = singleKey && singleKey.length > 1 ? '0.8125rem' : '1.4375rem';
+      elements['selected-name'].textContent = singleKey ? `${singleKey.toLowerCase()} key` : `${count} keys selected`;
+      const binding = singleKey && bindings.get(singleKey);
+      const modifiers = binding ? [[2, 'ctrl'], [1, 'alt'], [4, 'shift']].filter(([flag]) => binding.modifiers & flag).map(([, label]) => label) : [];
+      elements['selected-status'].textContent = count === 1 ? (binding ? [...modifiers, singleKey.toLowerCase()].join(' + ') : 'unassigned') : `${assigned.length} assigned`;
+      elements['macro-title'].textContent = macro ? macro.name : count ? 'assign a macro' : 'select a key';
+      elements['macro-description'].textContent = !state.stopKey ? 'choose a stop hotkey to create and use macros.' : singleKey && keyCodes[singleKey] === state.stopKey ? 'this key stops all running macros.' : macro ? `${macro.actions.length} action${macro.actions.length === 1 ? '' : 's'}` : count ? 'choose a macro for the selected key(s)' : '';
+      elements['assign-label'].textContent = macro ? 'change macro' : 'assign macro';
+      elements.assign.disabled = !state.stopKey || !count || [...selectedKeys].some(key => !supportedKey(key));
+      if (singleKey && keyCodes[singleKey] === state.stopKey) elements['selected-status'].textContent = 'stop hotkey';
+      if (singleKey && keyCodes[singleKey] === state.recordKey) {
+        elements['selected-status'].textContent = 'record hotkey';
+        elements['macro-description'].textContent = 'this key starts and stops recording in the macro editor.';
+      }
+      elements.deselect.hidden = count < 2;
+      elements.remove.hidden = !assigned.length;
+      elements['remove-label'].textContent = count > 1 ? 'remove assignments' : 'remove assignment';
+    }
+
+    function showMacros() {
+      const binding = selectedKeys.size === 1 && bindings.get([...selectedKeys][0]);
+      const useModifiers = ![...selectedKeys].every(key => /^F\d+$/.test(key));
+      const options = binding || state.bindingOptions || { modifiers: useModifiers ? 3 : 0, replace: false };
+      elements['mod-ctrl'].checked = !!(options.modifiers & 2);
+      elements['mod-alt'].checked = !!(options.modifiers & 1);
+      elements['mod-shift'].checked = !!(options.modifiers & 4);
+      elements['replace-input'].checked = options.replace;
+      updateBindingOptions();
+      renderMacros();
+      elements.macros.showModal();
+    }
+
+    function bindingOptions() {
+      return { modifiers: (elements['mod-ctrl'].checked ? 2 : 0) | (elements['mod-alt'].checked ? 1 : 0) | (elements['mod-shift'].checked ? 4 : 0), replace: elements['replace-input'].checked };
+    }
+
+    for (const id of ['mod-ctrl', 'mod-alt', 'mod-shift', 'replace-input']) {
+      elements[id].addEventListener('change', () => {
+        const options = bindingOptions();
+        const keys = new Set(selectedKeys);
+        optionSave = optionSave.then(async () => {
+          const next = nextState();
+          next.bindingOptions = options;
+          next.bindings = next.bindings.map(binding => keys.has(binding.key) ? { ...binding, ...options } : binding);
+          await commit(next);
+        }).catch(error => notify(error.message, 'error'));
+      });
+    }
+
+    function updateBindingOptions() {
+      const target = selectedKeys.size === 1 ? [...selectedKeys][0].toLowerCase() : `${selectedKeys.size} selected keys`;
+      elements['dialog-copy'].textContent = !state.stopKey ? 'choose a stop hotkey to create and use macros.' : selectedKeys.size ? `assign a macro to ${target}.` : '';
+      elements['binding-options'].hidden = !state.stopKey || !selectedKeys.size;
+    }
+
+    function notify(message, tone = 'neutral') {
+      clearTimeout(toastTimer);
+      elements.toast.textContent = message;
+      elements.toast.dataset.tone = tone;
+      elements.toast.hidden = false;
+      toastTimer = setTimeout(() => { elements.toast.hidden = true; }, 3000);
+    }
+
+    async function assignMacro(macro) {
+      await optionSave;
+      if (!state.stopKey) return notify('choose a stop hotkey first.', 'error');
+      if (!selectedKeys.size) return openEditor(macro);
+      if ([...selectedKeys].some(key => keyCodes[key] === state.stopKey)) return notify('the stop hotkey cannot also trigger a macro.', 'error');
+      if ([...selectedKeys].some(key => !supportedKey(key))) return notify('choose a supported key; esc, f12, fn, and standalone modifiers cannot be bound.', 'error');
+      const options = bindingOptions();
+      const next = nextState();
+      next.bindingOptions = options;
+      next.bindings = next.bindings.filter(binding => !selectedKeys.has(binding.key));
+      selectedKeys.forEach(key => next.bindings.push({ key, code: keyCodes[key], ...options, macroId: macro.id }));
+      try {
+        await commit(next);
+        elements.macros.close();
+        notify(`${macro.name} assigned.`, 'success');
+      } catch (error) { notify(error.message, 'error'); }
+    }
+
+    async function confirmDeletion(action, { buttonText = 'delete', details = '' } = {}) {
+      const dialog = elements['delete-confirmation'];
+      if (deletionPending) return false;
+      elements['delete-question'].textContent = `are you sure you want to ${action}?`;
+      elements['delete-details'].textContent = details;
+      elements['delete-details'].hidden = !details;
+      elements['confirm-deletion'].textContent = buttonText;
+      dialog.returnValue = 'cancel';
+      dialog.showModal();
+      deletionPending = true;
+      return new Promise(resolve => {
+        dialog.addEventListener('close', () => {
+          deletionPending = false;
+          resolve(dialog.returnValue === 'delete');
+        }, { once: true });
+      });
+    }
+
+    function imageThumbnail(image) {
+      const thumbnail = document.createElement('img');
+      thumbnail.alt = '';
+      thumbnail.draggable = false;
+      if (!imagePreviews.has(image.id)) {
+        imagePreviews.set(image.id, request('image-preview', { imageId: image.id }).catch(() => {
+          imagePreviews.delete(image.id);
+          return '';
+        }));
+      }
+      imagePreviews.get(image.id).then(source => {
+        if (source) thumbnail.src = source;
+        else thumbnail.alt = 'preview unavailable';
+      });
+      return thumbnail;
+    }
+
+    function imageStatus(message = '', error = false) {
+      const status = elements['images-status'];
+      status.textContent = message;
+      status.hidden = !message;
+      status.dataset.error = error;
+    }
+
+    async function deleteImage(image) {
+      if (imageBusy) return;
+      if (referencesImage(editorActions, image.id))
+        return imageStatus('remove this image from the current draft before deleting it.', true);
+      const saved = macros.filter(macro => referencesImage(macro.actions, image.id));
+      const other = saved.find(macro => macro.id !== editingId);
+      if (other) return imageStatus(`this image is still used by the saved macro “${other.name}”.`, true);
+
+      const imageName = `“${image.name}”`;
+      const data = { imageId: image.id };
+      const current = saved[0];
+      if (!current) {
+        if (await confirmDeletion(`delete ${imageName}`)) await updateImageLibrary('delete-image', data);
+        return;
+      }
+      const empty = !editorActions.length;
+      const action = empty ? `delete ${imageName} and ${macroDeletionTarget(current)}`
+        : `save the changes to “${current.name}” and delete ${imageName}`;
+      if (!await confirmDeletion(action, {
+        buttonText: empty ? 'delete both' : 'save and delete',
+        details: empty ? 'this draft has no events. the saved macro still uses this image.' : 'the saved macro still uses this image.'
+      })) return;
+
+      await updateImageLibrary('delete-image', data, { before: async () => {
+        await optionSave;
+        if (!empty) {
+          await commit(stateWithEditorMacro());
+          return 'macro changes saved.';
+        }
+        await commit(stateWithoutMacro(current.id));
+        editingId = null;
+        return 'saved macro deleted.';
+      } });
+    }
+
+    function renderImageLibrary() {
+      elements['images-empty'].hidden = images.length > 0;
+      const entries = images.map(image => {
+        const entry = document.createElement('div');
+        entry.className = 'image-entry';
+        entry.dataset.imageId = image.id;
+        const form = document.createElement('form');
+        form.className = 'image-rename';
+        const name = document.createElement('input');
+        name.type = 'text';
+        name.required = true;
+        name.maxLength = 255;
+        name.value = image.name;
+        name.setAttribute('aria-label', `name for ${image.name}`);
+        const rename = document.createElement('button');
+        rename.className = 'button';
+        rename.textContent = 'rename';
+        rename.disabled = true;
+        name.addEventListener('input', () => rename.disabled = !name.value.trim() || name.value.trim() === image.name);
+        form.append(name, rename);
+        form.addEventListener('submit', event => {
+          event.preventDefault();
+          if (!rename.disabled) updateImageLibrary('rename-image', { imageId: image.id, name: name.value.trim() });
+        });
+        const remove = document.createElement('button');
+        remove.className = 'button negative';
+        remove.type = 'button';
+        remove.textContent = 'delete';
+        remove.setAttribute('aria-label', `delete ${image.name}`);
+        remove.addEventListener('click', () => deleteImage(image));
+        entry.append(imageThumbnail(image), form, remove);
+        return entry;
+      });
+      elements['image-list'].replaceChildren(...entries);
+    }
+
+    function applyImages(next) {
+      images = next;
+      for (const id of imagePreviews.keys()) if (!images.some(image => image.id === id)) imagePreviews.delete(id);
+      if (elements['images-dialog'].open) renderImageLibrary();
+      renderEvents();
+      if (usesImage(inspectedAction) || inspectedAction?.condition) renderEventFields();
+    }
+
+    async function updateImageLibrary(command, data = {}, { timeout, before } = {}) {
+      if (imageBusy) return;
+      imageBusy = true;
+      imageStatus();
+      let summary = '';
+      try {
+        if (before) summary = await before();
+        const next = await request(command, data, timeout);
+        if (command !== 'start-image-capture') {
+          applyImages(next);
+          if (command === 'rename-image') elements['image-list'].querySelector(`[data-image-id="${data.imageId}"] input`)?.focus();
+          if (command === 'delete-image') elements['import-image'].focus();
+        }
+      } catch (error) { imageStatus([summary, error.message].filter(Boolean).join(' '), true); }
+      finally { imageBusy = false; }
+    }
+
+    function openImages() {
+      if (recording || recordingPending || elements['images-dialog'].open) return;
+      closeMenus();
+      imageStatus();
+      renderImageLibrary();
+      elements['images-dialog'].showModal();
+      syncEditing();
+    }
+
+    function macroDeletionTarget(macro) {
+      const assigned = state.bindings.some(binding => binding.macroId === macro.id);
+      return `the macro "${macro.name}"${assigned ? ' and its key assignments' : ''}`;
+    }
+
+    function stateWithoutMacro(id) {
+      const next = nextState();
+      next.macros = next.macros.filter(macro => macro.id !== id);
+      next.bindings = next.bindings.filter(binding => binding.macroId !== id);
+      return next;
+    }
+
+    function renderMacros() {
+      elements['macro-list'].replaceChildren();
+      if (!macros.length) {
+        const empty = document.createElement('p');
+        empty.className = 'empty-library';
+        empty.textContent = 'no macros yet.';
+        elements['macro-list'].append(empty);
+      }
+      macros.forEach(macro => {
+        const row = document.createElement('div');
+        row.className = 'macro-row';
+        const button = document.createElement('button');
+        button.className = 'macro-option';
+        button.innerHTML = '<span><strong></strong><small></small></span>';
+        button.disabled = !state.stopKey;
+        button.querySelector('strong').textContent = macro.name;
+        button.querySelector('small').textContent = `${macro.type === 'toggle' ? 'toggle' : 'no repeat'} / ${macro.actions.length} action${macro.actions.length === 1 ? '' : 's'}`;
+        button.addEventListener('click', () => assignMacro(macro));
+        const edit = document.createElement('button');
+        edit.className = 'close'; edit.textContent = 'edit';
+        edit.disabled = !state.stopKey;
+        edit.setAttribute('aria-label', `edit ${macro.name}`);
+        edit.addEventListener('click', () => openEditor(macro));
+        const remove = document.createElement('button');
+        remove.className = 'close negative'; remove.textContent = '×';
+        remove.setAttribute('aria-label', `delete ${macro.name}`);
+        remove.addEventListener('click', async () => {
+          if (!await confirmDeletion(`delete ${macroDeletionTarget(macro)}`)) return;
+          try { await commit(stateWithoutMacro(macro.id)); notify('macro deleted.'); } catch (error) { notify(error.message, 'error'); }
+        });
+        row.append(button, edit, remove);
+        elements['macro-list'].append(row);
+      });
+    }
+
+    function openEditor(macro = null) {
+      if (!state.stopKey) return notify('choose a stop hotkey first.', 'error');
+      editingId = macro?.id ?? null;
+      recordingSession = null;
+      macroName = macro?.name ?? '';
+      macroType = macro?.type ?? 'no-repeat';
+      elements['macro-name'].value = macroName;
+      editorActions = readEditorActions(macro?.actions ?? []);
+      selectedSequence = editorActions;
+      selectedEvent = -1;
+      inspectedAction = editorActions[0] ?? null;
+      setRecording(false);
+      flowReturnToMacros = elements.macros.open;
+      elements.macros.close();
+      showMacroStep(macro ? 'events' : 'name');
+    }
+
+    function syncEditing() {
+      if (!native) return;
+      const dialogOpen = !!document.querySelector('dialog[open]');
+      request('editing', { active: !!flowStep || dialogOpen, canRecord: flowStep === 'events' && !dialogOpen })
+        .catch(error => notify(error.message, 'error'));
+    }
+
+    function showMacroStep(step) {
+      closeMenus();
+      flowStep = step;
+      elements['keyboard-page'].hidden = true;
+      elements['macro-flow'].hidden = false;
+      elements['macro-flow'].classList.toggle('events-page', step === 'events');
+      elements['macro-name-page'].hidden = step !== 'name';
+      elements['macro-type-page'].hidden = step !== 'type';
+      elements.editor.hidden = step !== 'events';
+      elements['editor-title'].textContent = macroName;
+      elements['editor-type'].textContent = macroType === 'toggle' ? 'toggle' : 'no repeat';
+      document.querySelectorAll('[data-flow-step]').forEach(item => {
+        if (item.dataset.flowStep === step) item.setAttribute('aria-current', 'step');
+        else item.removeAttribute('aria-current');
+      });
+      window.scrollTo(0, 0);
+      if (step === 'name') elements['macro-name'].focus();
+      else if (step === 'type') elements['type-title'].focus();
+      else elements['editor-title'].focus();
+      syncEditing();
+    }
+
+    const eventTypes = {
+      key: { name: 'keystroke' }, mouse: { name: 'mouse click' }, text: { name: 'type text' },
+      wait: { name: 'delay' }, move: { name: 'mouse move' }, 'wait-for-image': { name: 'wait for image' },
+      'if-else': { name: 'if / else', keyword: 'if', branches: [['actions', 'then'], ['elseActions', 'else']] },
+      while: { name: 'while', keyword: 'while', branches: [['actions', 'do']] }
+    };
+
+    const conditionTypes = {
+      'image-on-screen': {
+        name: 'image on screen', defaults: { imageId: 0 },
+        renderFields: (condition, { chooseImage }) => chooseImage(condition),
+        renderSummary: (condition, summary) => {
+          const image = images.find(image => image.id === condition.imageId);
+          if (!image) return summary.append('choose an image');
+          const name = document.createElement('span');
+          name.className = 'event-condition-image';
+          name.textContent = image.name;
+          summary.append(name, ' is on screen');
+        },
+        error: imageError,
+        referencesImage: (condition, id) => condition.imageId === id
+      }
+    };
+
+    function defaultCondition(type = Object.keys(conditionTypes)[0]) {
+      return { type, ...conditionTypes[type].defaults };
+    }
+
+    function branches(type) { return eventTypes[type].branches ?? []; }
+
+    function defaultEvent(type) {
+      if (branches(type).length) {
+        return { type, condition: defaultCondition(), ...Object.fromEntries(branches(type).map(([name]) => [name, []])) };
+      }
+      return { type, duration: type === 'wait' ? 50 : 0, ...{
+        key: { key: 65, modifiers: 0 }, mouse: { button: 0 }, text: { text: '' },
+        move: { x: 0, y: 0, destination: 'coordinates', imageId: 0 },
+        'wait-for-image': { imageId: 0 }
+      }[type] };
+    }
+
+    function readEditorActions(actions) {
+      return actions.map(saved => {
+        const action = { ...defaultEvent(saved.type), ...saved };
+        if (action.condition) action.condition = { ...action.condition };
+        const rangeKey = durationRangeKey(action);
+        if (rangeKey && action[rangeKey]) action[rangeKey] = { ...action[rangeKey] };
+        for (const [name] of branches(action.type)) action[name] = readEditorActions(saved[name]);
+        return action;
+      });
+    }
+
+    function* walkEvents(sequence) {
+      for (const action of sequence) {
+        yield action;
+        for (const [name] of branches(action.type)) yield* walkEvents(action[name]);
+      }
+    }
+
+    function eventCount() { return [...walkEvents(editorActions)].length; }
+
+    function referencesImage(sequence, id) {
+      for (const action of walkEvents(sequence)) {
+        if (usesImage(action) && action.imageId === id) return true;
+        if (action.condition && conditionTypes[action.condition.type].referencesImage?.(action.condition, id)) return true;
+      }
+      return false;
+    }
+
+    function usesImage(action) {
+      return action?.type === 'wait-for-image' || (action?.type === 'move' && action.destination === 'image');
+    }
+
+    function imageError(target, savedActions) {
+      return images.some(image => image.id === target.imageId) || referencesImage(savedActions, target.imageId)
+        ? '' : 'choose an image from your library.';
+    }
+
+    function eventKeys(action) {
+      const name = Object.keys(keyCodes).find(key => keyCodes[key] === action.key)?.toLowerCase() || ({ 16: 'shift', 17: 'ctrl', 18: 'alt' })[action.key] || `key ${action.key}`;
+      return [...[[2, 'ctrl'], [1, 'alt'], [4, 'shift']].filter(([flag]) => action.modifiers & flag).map(([, label]) => label), name];
+    }
+
+    function eventState(action) {
+      return action.mode === 'down' ? 'down' : action.mode === 'up' ? 'release' : 'down / release';
+    }
+
+    function durationRangeKey(action) {
+      if (action.type === 'text') return 'delayRange';
+      if (['key', 'mouse'].includes(action.type) && (!action.mode || action.mode === 'press')) return 'holdRange';
+    }
+
+    function validDuration(value) { return Number.isInteger(value) && value >= 0 && value <= 60000; }
+
+    function eventLabel(action) {
+      if (action.type === 'key') return eventKeys(action).join(' + ');
+      if (action.type === 'mouse') return `${action.button ? 'right' : 'left'} mouse`;
+      if (action.type === 'text') return action.text || 'enter text';
+      if (usesImage(action)) return images.find(image => image.id === action.imageId)?.name || 'choose an image';
+      if (action.type === 'move') return `${action.x}, ${action.y}`;
+      return `${action.duration} ms`;
+    }
+
+    function eventDetail(action) {
+      if (action.type === 'wait') return 'delay';
+      const mode = ['key', 'mouse'].includes(action.type) ? eventState(action) : eventTypes[action.type].name;
+      const rangeKey = durationRangeKey(action);
+      const range = rangeKey && action[rangeKey];
+      if (range && validDuration(range.min) && validDuration(range.max))
+        return `${mode} / random ${rangeKey === 'holdRange' ? 'hold' : 'delay'} ${range.min}–${range.max} ms`;
+      return `${mode}${action.duration ? ` / ${action.duration} ms` : ''}`;
+    }
+
+    function renderEventGraphic(block, action) {
+      const visual = document.createElement('span');
+      visual.className = 'event-visual';
+      visual.setAttribute('aria-hidden', 'true');
+      let caption = eventTypes[action.type].name;
+      if (action.type === 'key') {
+        visual.className = 'event-chord';
+        eventKeys(action).forEach((name, index) => {
+          if (index) visual.append(document.createTextNode('+'));
+          const cap = document.createElement('span');
+          cap.className = `event-visual event-key${name.length > 1 ? ' wide' : ''}`;
+          cap.textContent = ({ left: '←', right: '→', up: '↑', down: '↓', enter: '↵', backspace: '⌫' })[name] || name.replace(/^left /, 'l ').replace(/^right /, 'r ');
+          visual.append(cap);
+        });
+        caption = eventState(action);
+      } else if (action.type === 'mouse') {
+        visual.classList.add('event-mouse');
+        const button = action.button ? 'M32 8a20 20 0 0 1 20 20v6H32Z' : 'M32 8a20 20 0 0 0-20 20v6h20Z';
+        visual.innerHTML = `<svg viewBox="0 0 64 80"><path class="mouse-button" d="${button}"/><path d="M12 28a20 20 0 0 1 40 0v24a20 20 0 0 1-40 0Z"/><path d="M32 8v26m-20 0h40"/><path class="mouse-wheel" d="M32 18v8"/></svg>`;
+        caption = eventState(action);
+      } else if (action.type === 'wait') {
+        visual.classList.add('event-delay');
+        visual.innerHTML = '<span></span><small>ms</small>';
+        visual.querySelector('span').textContent = Number.isFinite(action.duration) ? action.duration : '—';
+      } else if (action.type === 'text') {
+        visual.classList.add('event-text');
+        const preview = document.createElement('span');
+        preview.className = 'event-text-preview';
+        preview.textContent = action.text || 'text';
+        visual.append(preview);
+      } else if (usesImage(action)) {
+        const image = images.find(image => image.id === action.imageId);
+        visual.classList.add('event-image');
+        const verb = action.type === 'move' ? 'move to' : 'wait for';
+        caption = `${verb} ${image?.name || 'image'}`;
+        if (image) {
+          visual.append(imageThumbnail(image));
+        } else {
+          visual.innerHTML = '<svg viewBox="0 0 48 48"><rect x="5" y="8" width="38" height="32" rx="3"/><circle cx="16" cy="19" r="4"/><path d="m5 34 10-8 7 6 9-10 12 10"/></svg>';
+        }
+      } else if (action.type === 'move') {
+        visual.innerHTML = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="18"/><circle cx="32" cy="32" r="4"/><path d="M32 4v16m0 24v16M4 32h16m24 0h16"/></svg>';
+        caption = `move to ${eventLabel(action)}`;
+      }
+      const label = document.createElement('span');
+      label.className = 'event-caption';
+      if (usesImage(action)) label.classList.add('event-image-caption');
+      label.textContent = caption;
+      block.append(visual, label);
+    }
+
+    function renderEvents() {
+      const adder = elements['event-adder'];
+      if (openMenu && elements.steps.contains(openMenu) && !adder.contains(openMenu)) closeMenus();
+      for (const child of [...elements.steps.children]) if (child !== adder) child.remove();
+      const locked = recording || recordingPending;
+      const count = eventCount();
+      const limitReached = count >= 256;
+      adder.querySelector('[data-record-inputs]').disabled = count > 254;
+      let selectedBlock;
+      renderSequence(editorActions, adder);
+      for (const id of ['add-event', 'conditionals']) {
+        elements[id].disabled = locked || limitReached;
+        if (elements[id].disabled && openMenu === elements[id]) closeMenus();
+      }
+      return selectedBlock;
+
+      function renderSequence(sequence, adder) {
+        sequence.forEach((action, index) => {
+          const block = renderBlock(action, index, sequence);
+          const eventBranches = branches(action.type);
+          if (!eventBranches.length) {
+            adder.before(block);
+            return;
+          }
+          const group = document.createElement('div');
+          group.className = 'event-flow';
+          const body = document.createElement('div');
+          body.className = 'event-branches';
+          group.append(block, body);
+          for (const [name, label] of eventBranches) {
+            const branchLabel = `${eventTypes[action.type].keyword} ${label}`;
+            const branch = document.createElement('section');
+            branch.className = 'event-branch';
+            branch.setAttribute('aria-label', branchLabel);
+            if (eventBranches.length > 1) {
+              const heading = document.createElement('p');
+              heading.className = 'event-branch-label';
+              heading.textContent = label;
+              branch.append(heading);
+            }
+            const steps = document.createElement('div');
+            steps.className = 'event-sequence';
+            const childAdder = branchAdder(action[name], branchLabel, locked || limitReached);
+            steps.append(childAdder);
+            renderSequence(action[name], childAdder);
+            branch.append(steps);
+            body.append(branch);
+          }
+          adder.before(group);
+        });
+      }
+
+      function renderBlock(action, index, sequence) {
+        const block = document.createElement('button');
+        block.type = 'button'; block.className = 'event-block'; block.draggable = !locked;
+        block.dataset.index = index; block.dataset.type = action.type;
+        block.disabled = locked;
+        const selected = sequence === selectedSequence && index === selectedEvent;
+        if (selected) selectedBlock = block;
+        block.setAttribute('aria-pressed', String(selected));
+        eventLocations.set(block, { index, sequence });
+        if (action.condition) {
+          block.classList.add('event-condition');
+          block.innerHTML = '<span class="event-condition-keyword"></span> <span class="event-condition-summary"></span>';
+          block.firstElementChild.textContent = eventTypes[action.type].keyword;
+          conditionTypes[action.condition.type].renderSummary(action.condition, block.lastElementChild);
+        } else {
+          block.setAttribute('aria-label', `${eventLabel(action)}, ${eventDetail(action)}`);
+          renderEventGraphic(block, action);
+        }
+        block.addEventListener('click', () => selectEvent(index, true, sequence));
+        block.addEventListener('keydown', event => {
+          if (event.altKey && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
+            event.preventDefault(); moveEvent(index, index + (event.key === 'ArrowLeft' ? -1 : 1), sequence);
+          }
+        });
+        block.addEventListener('dragstart', event => {
+          if (locked) return event.preventDefault();
+          eventDrag = { index, sequence };
+          event.dataTransfer.setData('text/plain', String(index));
+          event.dataTransfer.effectAllowed = 'move';
+          block.classList.add('dragging');
+        });
+        block.addEventListener('dragend', clearEventDrag);
+        bindDropTarget(block, () => sequence, () => index);
+        return block;
+      }
+    }
+
+    function branchAdder(sequence, label, disabled) {
+      const adder = elements['event-adder'].cloneNode(true);
+      const [button, menu] = adder.children;
+      adder.removeAttribute('id');
+      button.removeAttribute('id');
+      button.removeAttribute('aria-controls');
+      button.setAttribute('aria-label', `add event to ${label}`);
+      button.setAttribute('aria-expanded', 'false');
+      button.disabled = disabled;
+      menu.removeAttribute('id');
+      menu.hidden = true;
+      const conditionals = elements['conditionals-menu'].firstElementChild;
+      menu.firstElementChild.append(...[...conditionals.children].map(option => option.cloneNode(true)));
+      bindAddMenu(button, () => sequence);
+      bindDropTarget(adder, () => sequence, () => sequence.length);
+      return adder;
+    }
+
+    function containsSequence(action, target) {
+      return branches(action.type).some(([name]) => action[name] === target ||
+        action[name].some(child => containsSequence(child, target)));
+    }
+
+    function bindDropTarget(block, getSequence, getIndex) {
+      const canDrop = () => {
+        const action = eventDrag?.sequence[eventDrag.index];
+        return action && !recording && !recordingPending && !containsSequence(action, getSequence());
+      };
+      block.addEventListener('dragover', event => {
+        if (!canDrop()) return;
+        event.preventDefault(); event.dataTransfer.dropEffect = 'move';
+        block.classList.add('drop-before');
+      });
+      block.addEventListener('dragleave', () => block.classList.remove('drop-before'));
+      block.addEventListener('drop', event => {
+        if (!canDrop()) return;
+        event.preventDefault();
+        const { sequence: source, index: from } = eventDrag;
+        const target = getSequence(), before = getIndex();
+        moveEvent(from, source === target && from < before ? before - 1 : before, source, target);
+        clearEventDrag();
+      });
+    }
+
+    function clearEventDrag() {
+      eventDrag = null;
+      elements.steps.querySelectorAll('.dragging, .drop-before').forEach(item => item.classList.remove('dragging', 'drop-before'));
+    }
+
+    function setMenu(button, open) {
+      const expanded = open && !button.disabled;
+      if (expanded && openMenu !== button) closeMenus();
+      if (expanded || openMenu === button) openMenu = expanded ? button : null;
+      const menu = button.nextElementSibling;
+      menu.hidden = !expanded;
+      button.setAttribute('aria-expanded', String(expanded));
+      if (expanded) {
+        const options = menu.firstElementChild;
+        options.scrollTop = 0;
+        positionMenu(button);
+        options.querySelector('button:not(:disabled), input:not(:disabled)')?.focus();
+      }
+    }
+
+    function positionMenu(button) {
+      const menu = button.nextElementSibling;
+      const options = menu.firstElementChild;
+      const scrollTop = options.scrollTop;
+      menu.removeAttribute('data-scrollable');
+      menu.style.left = '0';
+      menu.style.top = '';
+      menu.style.maxHeight = '';
+      const bounds = menu.getBoundingClientRect();
+      const above = button.getBoundingClientRect().top - 24;
+      const below = innerHeight - bounds.top - 16;
+      const placeAbove = bounds.height > below && above > below;
+      menu.style.left = `${Math.min(0, innerWidth - 16 - bounds.right)}px`;
+      menu.style.maxHeight = `${Math.max(80, placeAbove ? above : below)}px`;
+      menu.toggleAttribute('data-scrollable', options.scrollHeight > options.clientHeight);
+      if (placeAbove) menu.style.top = `${-menu.getBoundingClientRect().height - 8}px`;
+      options.scrollTop = scrollTop;
+      updateMenuArrows(options);
+    }
+
+    function updateMenuArrows(options) {
+      const { scrollTop, scrollHeight, clientHeight, parentElement: menu } = options;
+      menu.toggleAttribute('data-more-above', scrollTop > 0.5);
+      menu.toggleAttribute('data-more-below', scrollHeight - clientHeight - scrollTop > 1);
+    }
+
+    function closeMenus() {
+      if (openMenu) setMenu(openMenu, false);
+    }
+
+    function selectEvent(index, focus = false, sequence = editorActions) {
+      selectedSequence = sequence;
+      selectedEvent = index;
+      if (index >= 0) inspectedAction = sequence[index];
+      const block = renderEvents();
+      renderEventFields();
+      if (focus) block?.focus({ preventScroll: true });
+      return block;
+    }
+
+    function addAction(action, index, recorded = false, sequence = selectedSequence) {
+      if ((recording || recordingPending) && !recorded) return;
+      if (eventCount() >= 256) return notify('a macro can contain up to 256 events.', 'error');
+      index ??= selectedEvent < 0 ? sequence.length : selectedEvent + 1;
+      sequence.splice(index, 0, action);
+      selectEvent(index, !recorded, sequence)?.scrollIntoView({ block: 'nearest' });
+    }
+
+    function moveEvent(from, to, source = editorActions, target = source) {
+      if (recording || recordingPending || to < 0 || to > target.length || !source[from]) return;
+      if (source === target) to = Math.min(to, target.length - 1);
+      if ((source === target && from === to) || containsSequence(source[from], target)) return;
+      target.splice(to, 0, source.splice(from, 1)[0]);
+      selectEvent(to, true, target);
+    }
+
+    function removeEvent() {
+      if (recording || recordingPending || selectedEvent < 0) return;
+      selectedSequence.splice(selectedEvent, 1);
+      if (!selectedSequence.length)
+        inspectedAction = [...walkEvents(editorActions)].find(action =>
+          branches(action.type).some(([name]) => action[name] === selectedSequence)) ?? null;
+      selectEvent(Math.min(selectedEvent, selectedSequence.length - 1), true, selectedSequence);
+    }
+
+    function renderEventFields() {
+      const action = inspectedAction;
+      document.querySelector('.event-inspector').hidden = !action;
+      document.querySelector('.builder-workspace').classList.toggle('has-event-fields', !!action);
+      elements['event-fields'].replaceChildren();
+      if (!action) return;
+      function field(label, name, tag = 'input', options = {}, update = value => {
+        action[name] = tag === 'textarea' ? value : value === '' ? NaN : Number(value);
+      }) {
+        const wrapper = document.createElement('label');
+        wrapper.className = 'field'; wrapper.append(document.createTextNode(label));
+        const control = document.createElement(tag);
+        control.name = name;
+        Object.assign(control, options);
+        control.disabled = recording || recordingPending;
+        control.addEventListener('input', () => {
+          update(control.value);
+          renderEvents();
+        });
+        wrapper.append(control); elements['event-fields'].append(wrapper);
+        return control;
+      }
+      function choices(label, name, values, value, update = option => {
+        action[name] = typeof value === 'number' ? Number(option) : option;
+      }) {
+        const control = field(label, name, 'select', {}, update);
+        values.forEach(([code, text]) => control.add(new Option(text, code)));
+        if (!values.some(([code]) => String(code) === String(value))) control.add(new Option(`key ${value}`, value));
+        control.value = value;
+        return control;
+      }
+      function chooseImage(target) {
+        const targets = [[0, 'choose an image'], ...images.map(image => [image.id, image.name])];
+        if (target.imageId && !images.some(image => image.id === target.imageId)) targets.push([target.imageId, 'missing image']);
+        choices('image', 'imageId', targets, target.imageId, value => { target.imageId = Number(value); });
+      }
+      if (action.condition) {
+        const types = Object.entries(conditionTypes).map(([type, details]) => [type, details.name]);
+        choices('condition', 'condition', types, action.condition.type, type => {
+          if (type === action.condition.type) return;
+          action.condition = defaultCondition(type);
+          renderEventFields();
+          elements['event-fields'].querySelector('[name="condition"]').focus({ preventScroll: true });
+        });
+        conditionTypes[action.condition.type].renderFields(action.condition, { field, choices, chooseImage });
+        return;
+      }
+      if (['key', 'mouse'].includes(action.type)) {
+        const mode = choices('event', 'mode', [['press', 'press and release'], ['down', 'press down'], ['up', 'release']], action.mode || 'press');
+        mode.addEventListener('change', () => {
+          action.mode = mode.value;
+          if (action.mode !== 'press') action.modifiers = 0;
+          renderEventFields(); renderEvents();
+        });
+      }
+      if (action.type === 'key') {
+        choices('key', 'key', Object.entries(keyCodes).filter(([, code]) => code).map(([name, code]) => [code, name.toLowerCase()]), action.key);
+        if (!action.mode || action.mode === 'press') choices('shortcut modifiers', 'modifiers', [[0, 'none'], [2, 'ctrl'], [1, 'alt'], [4, 'shift'], [3, 'ctrl + alt'], [6, 'ctrl + shift'], [5, 'alt + shift'], [7, 'ctrl + alt + shift']], action.modifiers || 0);
+      }
+      if (action.type === 'mouse') choices('mouse button', 'button', [[0, 'left'], [1, 'right']], action.button);
+      if (action.type === 'move') {
+        const destination = choices('destination', 'destination', [['coordinates', 'move to coordinates'], ['image', 'move to image']], action.destination);
+        destination.addEventListener('change', () => {
+          action.destination = destination.value;
+          renderEventFields(); renderEvents();
+          elements['event-fields'].querySelector('[name="destination"]').focus({ preventScroll: true });
+        });
+      }
+      if (usesImage(action)) chooseImage(action);
+      if (action.type === 'wait-for-image') return;
+      if (action.type === 'text') field('text', 'text', 'textarea', { value: action.text, rows: 3, maxLength: 65536, required: true });
+      if ((action.type === 'move' && !usesImage(action)) || (action.type === 'mouse' && action.positioned)) ['x', 'y'].forEach(axis => field(`${axis} position`, axis, 'input', { type: 'number', value: action[axis], min: -2147483648, max: 2147483647, step: 1, required: true }));
+      function durationField(label, name, value, update) {
+        return field(`${label} (ms)`, name, 'input', { type: 'number', value: Number.isFinite(value) ? value : '', min: 0, max: 60000, step: 1, required: true }, update);
+      }
+      const rangeKey = durationRangeKey(action);
+      if (!rangeKey) {
+        durationField(action.type === 'wait' ? 'delay' : 'delay after', 'duration', action.duration);
+        return;
+      }
+
+      const hold = rangeKey === 'holdRange';
+      const label = hold ? 'hold duration' : 'delay after';
+      const typeLabel = hold ? 'hold' : 'delay';
+      const typeField = `${typeLabel}Type`;
+      const durationType = choices(`${typeLabel} type`, typeField, [['manual', `manual ${label}`], ['random', `random ${label}`]],
+        action[rangeKey] ? 'random' : 'manual', type => {
+          if (type === 'random') {
+            const duration = validDuration(action.duration) ? action.duration : 0;
+            action[rangeKey] ??= { min: duration, max: duration };
+          } else delete action[rangeKey];
+          renderEventFields();
+          elements['event-fields'].querySelector(`[name="${typeField}"]`).focus({ preventScroll: true });
+        });
+      durationType.labels[0].addEventListener('click', event => {
+        if (event.target === durationType || durationType.disabled || !event.isTrusted || !durationType.showPicker) return;
+        event.preventDefault();
+        durationType.focus();
+        durationType.showPicker();
+      });
+      const range = action[rangeKey];
+      if (!range) {
+        durationField(label, 'duration', action.duration);
+        return;
+      }
+      for (const bound of ['min', 'max']) {
+        durationField(`${bound} ${hold ? 'hold duration' : 'delay'}`, `${bound}${hold ? 'HoldDuration' : 'Delay'}`, range[bound], value => {
+          range[bound] = value === '' ? NaN : Number(value);
+        });
+      }
+    }
+
+    function updateRecordingControls() {
+      const stopKeys = [state.stopKey, state.recordKey].filter(Boolean).map(hotkeyName);
+      elements['record-status'].textContent = recording ? `recording · press ${stopKeys.join(' or ')} to stop` : '';
+      for (const id of ['macro-name', 'record-settings', 'open-images', 'save-macro', 'flow-back']) elements[id].disabled = recording || recordingPending;
+      document.querySelectorAll('[data-record-option]').forEach(control => control.disabled = recording || recordingPending);
+      elements['record-split-keys'].disabled = recording || recordingPending || !elements['record-keyboard'].checked;
+      elements['record-position'].disabled = recording || recordingPending || !elements['record-mouse'].checked;
+    }
+
+    function setRecording(active) {
+      recording = active;
+      updateRecordingControls();
+      renderEvents(); renderEventFields();
+    }
+
+    async function toggleRecording(sequence = selectedSequence, index = selectedEvent < 0 ? sequence.length : selectedEvent + 1) {
+      if (recordingPending) return;
+      const wasRecording = recording;
+      recordingPending = true;
+      updateRecordingControls();
+      closeMenus();
+      renderEvents(); renderEventFields();
+      try {
+        if (wasRecording) await request('stop-recording');
+        else {
+          await optionSave;
+          const session = { id: ++nextRecordingSession, sequence, index };
+          recordingSession = session;
+          await request('start-recording', { session: session.id, limit: 256 - eventCount() });
+          if (recordingSession === session) setRecording(true);
+        }
+      } catch (error) {
+        if (!wasRecording) {
+          await request('stop-recording').catch(() => {});
+          recordingSession = null;
+          setRecording(false);
+        }
+        notify(error.message, 'error');
+      }
+      finally { recordingPending = false; updateRecordingControls(); renderEvents(); renderEventFields(); }
+    }
+
+    async function closeEditor() {
+      if (recordingPending || saving) return;
+      if (recording) {
+        try { await request('stop-recording'); }
+        catch (error) { return notify(error.message, 'error'); }
+      }
+      recordingSession = null;
+      closeMenus();
+      setRecording(false);
+      flowStep = null;
+      elements['macro-flow'].hidden = true;
+      elements.editor.hidden = true;
+      elements['keyboard-page'].hidden = false;
+      if (flowReturnToMacros) showMacros();
+      else elements['open-macros'].focus();
+      syncEditing();
+    }
+
+    function cancelCapture() {
+      if (!hotkeyCapture || elements['stop-picker'].open) return;
+      hotkeyCapture = null;
+      request('cancel-capture').catch(error => notify(error.message, 'error'));
+    }
+
+    async function captureHotkey(kind = 'stop') {
+      await optionSave;
+      const capture = { id: ++nextCaptureId, kind };
+      const picker = elements['stop-picker'];
+      hotkeyCapture = capture;
+      try {
+        elements['stop-title'].textContent = `${kind} hotkey`;
+        elements['close-stop'].setAttribute('aria-label', `cancel ${kind} hotkey selection`);
+        elements['hotkey-copy'].textContent = kind === 'record' ? 'press a single key to start and stop recording. choose a key different from the stop hotkey and any macro assignments.' : 'press a single key to stop all running macros. choose a key that is not assigned to a macro or recording.';
+        if (!picker.open) picker.showModal();
+        await request(`capture-${kind}`, { captureId: capture.id });
+      } catch (error) {
+        if (hotkeyCapture !== capture) return;
+        hotkeyCapture = null;
+        picker.close();
+        notify(error.message, 'error');
+      }
+    }
+
+    if (native) native.addEventListener('message', async event => {
+      const message = event.data;
+      if (message.id && pending.has(message.id)) {
+        const entry = pending.get(message.id);
+        clearTimeout(entry.timer); pending.delete(message.id);
+        if (message.ok) entry.resolve(message.state);
+        else entry.reject(new Error(message.message));
+      } else if (message.event === 'playback') {
+        playback = message;
+        elements['stop-playback'].hidden = !playback.active;
+      }
+      else if (message.event === 'error') notify(message.message, 'error');
+      else if (message.event === 'images-changed') applyImages(message.images);
+      else if (message.event === 'record-hotkey' && flowStep === 'events' && !hotkeyCapture && !elements['images-dialog'].open) toggleRecording();
+      else if (recordingSession && message.session === recordingSession.id) {
+        if (message.event === 'recorded' && flowStep === 'events') {
+          addAction(message.action, recordingSession.index++, true, recordingSession.sequence);
+        } else if (message.event === 'recording') {
+          if (!message.active) recordingSession = null;
+          setRecording(message.active);
+        }
+      }
+      else if (message.event === 'captured') {
+        const capture = hotkeyCapture;
+        const picker = elements['stop-picker'];
+        if (!capture || capture.id !== message.captureId || !picker.open) return;
+        if (!message.trigger) { hotkeyCapture = null; picker.close(); return; }
+        try {
+          await optionSave;
+          if (hotkeyCapture !== capture || !picker.open) return;
+          const next = nextState(); next[`${capture.kind}Key`] = message.trigger.code;
+          await commit(next);
+          if (hotkeyCapture === capture) { hotkeyCapture = null; picker.close(); }
+          notify(`${capture.kind} hotkey saved.`, 'success');
+        } catch (error) {
+          notify(error.message, 'error');
+          if (hotkeyCapture === capture && picker.open) captureHotkey(capture.kind);
+        }
+      }
+    });
+
+    elements['open-macros'].addEventListener('click', showMacros);
+    elements['keyboard-panel'].addEventListener('pointerdown', event => {
+      if (event.button !== 0 || drag || event.target.closest('select, option, button:not(.key)')) return;
+      const key = event.target.closest('.key');
+      const id = key?.dataset.key;
+      const additive = event.ctrlKey || event.metaKey;
+      drag = {
+        pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false,
+        base: new Set(selectedKeys), additive, removing: additive && selectedKeys.has(id),
+        bounds: elements['keyboard-panel'].getBoundingClientRect(),
+        keys: [...keyButtons].map(([id, button]) => [id, button.getBoundingClientRect()])
+      };
+      elements['keyboard-panel'].setPointerCapture(event.pointerId);
+      if (!additive) selectedKeys.clear();
+      if (id) {
+        if (drag.removing) selectedKeys.delete(id);
+        else selectedKeys.add(id);
+      }
+      renderSelection();
+    });
+
+    function moveDrag(event) {
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (!drag.moved && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 4) return;
+      drag.moved = true;
+      const { bounds } = drag;
+      const left = Math.max(bounds.left, Math.min(drag.x, event.clientX));
+      const top = Math.max(bounds.top, Math.min(drag.y, event.clientY));
+      const right = Math.min(bounds.right, Math.max(drag.x, event.clientX));
+      const bottom = Math.min(bounds.bottom, Math.max(drag.y, event.clientY));
+      const next = new Set(drag.additive ? drag.base : []);
+      drag.keys.forEach(([id, rect]) => {
+        if (rect.left <= right && rect.right >= left && rect.top <= bottom && rect.bottom >= top) {
+          if (drag.removing) next.delete(id);
+          else next.add(id);
+        }
+      });
+      selectedKeys.clear();
+      next.forEach(key => selectedKeys.add(key));
+      Object.assign(elements['selection-box'].style, {
+        left: `${left - bounds.left - elements['keyboard-panel'].clientLeft}px`,
+        top: `${top - bounds.top - elements['keyboard-panel'].clientTop}px`,
+        width: `${right - left}px`, height: `${bottom - top}px`
+      });
+      elements['selection-box'].hidden = false;
+      renderSelection();
+    }
+
+    function endDrag(event) {
+      if (!drag || (event && drag.pointerId !== event.pointerId)) return;
+      if (event?.type === 'pointerup') moveDrag(event);
+      const { pointerId } = drag;
+      drag = null;
+      elements['selection-box'].hidden = true;
+      if (elements['keyboard-panel'].hasPointerCapture(pointerId)) elements['keyboard-panel'].releasePointerCapture(pointerId);
+    }
+
+    document.addEventListener('pointermove', moveDrag, true);
+    document.addEventListener('pointerup', endDrag, true);
+    document.addEventListener('pointercancel', endDrag, true);
+    elements['keyboard-panel'].addEventListener('lostpointercapture', endDrag);
+    window.addEventListener('blur', () => endDrag());
+    elements.deselect.addEventListener('click', () => {
+      endDrag();
+      selectedKeys.clear();
+      renderSelection();
+      keyButtons.values().next().value?.focus({ preventScroll: true });
+    });
+    elements.layout.addEventListener('change', () => {
+      const layout = elements.layout.value;
+      renderKeyboard();
+      optionSave = optionSave.then(async () => {
+        const next = nextState(); next.layout = layout;
+        await commit(next);
+      }).catch(error => notify(error.message, 'error'));
+    });
+    elements.assign.addEventListener('click', () => {
+      if (!selectedKeys.size) return notify('select a key first.', 'error');
+      showMacros();
+    });
+    elements['new-macro'].addEventListener('click', () => openEditor());
+    elements['macro-name-form'].addEventListener('submit', event => {
+      event.preventDefault();
+      const name = elements['macro-name'].value.trim().toLowerCase();
+      if (!name || new TextEncoder().encode(name).length > 128) return notify('enter a name up to 128 bytes.', 'error');
+      macroName = name;
+      showMacroStep('type');
+    });
+    document.querySelectorAll('[data-macro-type]').forEach(button => button.addEventListener('click', () => {
+      macroType = button.dataset.macroType;
+      showMacroStep('events');
+    }));
+    elements['flow-back'].addEventListener('click', () => {
+      if (recording || recordingPending || saving) return;
+      if (flowStep === 'events') showMacroStep('type');
+      else if (flowStep === 'type') showMacroStep('name');
+      else closeEditor();
+    });
+    function bindMenu(button) {
+      const menu = button.nextElementSibling;
+      const scroller = menu.firstElementChild;
+      scroller.addEventListener('scroll', () => updateMenuArrows(scroller));
+      button.addEventListener('click', () => setMenu(button, menu.hidden));
+      button.addEventListener('keydown', event => {
+        if (event.key === 'ArrowDown') { event.preventDefault(); setMenu(button, true); }
+      });
+      menu.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          event.preventDefault(); setMenu(button, false); button.focus();
+        } else if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+          event.preventDefault();
+          const options = [...menu.querySelectorAll('button:not(:disabled), input:not(:disabled)')];
+          const index = options.indexOf(document.activeElement);
+          const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1 : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
+          options[next]?.focus();
+        }
+      });
+      button.closest('.event-picker').addEventListener('focusout', event => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setMenu(button, false);
+      });
+    }
+
+    function bindAddMenu(button, getSequence) {
+      bindMenu(button);
+      button.nextElementSibling.querySelector('[data-record-inputs]')?.addEventListener('click', () => {
+        const sequence = getSequence();
+        toggleRecording(sequence, sequence.length);
+      });
+      button.nextElementSibling.querySelectorAll('[data-add-event]').forEach(option => option.addEventListener('click', () => {
+        closeMenus();
+        const sequence = getSequence();
+        addAction(defaultEvent(option.dataset.addEvent), sequence.length, false, sequence);
+      }));
+    }
+
+    bindMenu(elements['record-settings']);
+    bindAddMenu(elements['add-event'], () => editorActions);
+    bindAddMenu(elements.conditionals, () => editorActions);
+    window.addEventListener('resize', () => { if (openMenu) positionMenu(openMenu); });
+    bindDropTarget(elements['event-adder'], () => editorActions, () => editorActions.length);
+    document.addEventListener('pointerdown', event => {
+      if (!event.target.closest('.event-picker')) closeMenus();
+      if (flowStep === 'events' && !recording && !recordingPending && selectedEvent >= 0 &&
+          !event.target.closest('.event-block, .event-inspector, .event-picker, button, input, select, textarea, label, [contenteditable]')) selectEvent(-1);
+    });
+    document.querySelectorAll('[data-record-option]').forEach(control => control.addEventListener('change', () => {
+      if (!elements['record-mouse'].checked) elements['record-position'].checked = false;
+      updateRecordingControls();
+      const options = recordingOptions();
+      optionSave = optionSave.then(async () => {
+        const next = nextState(); next.recordingOptions = options;
+        await commit(next);
+      }).catch(error => notify(error.message, 'error'));
+    }));
+    elements['close-editor'].addEventListener('click', closeEditor);
+    elements['open-images'].addEventListener('click', openImages);
+    elements['close-images'].addEventListener('click', () => elements['images-dialog'].close());
+    elements['images-dialog'].addEventListener('close', syncEditing);
+    elements['import-image'].addEventListener('click', () => updateImageLibrary('import-image', {}, { timeout: 0 }));
+    elements['capture-image'].addEventListener('click', () => updateImageLibrary('start-image-capture'));
+    document.addEventListener('keydown', event => {
+      if (recording) { event.preventDefault(); return; }
+      if (flowStep !== 'events' || recordingPending || document.querySelector('dialog[open]') || openMenu || !['Backspace', 'Delete'].includes(event.key) || event.ctrlKey || event.metaKey || event.altKey || event.target.closest('input, textarea, select, [contenteditable]')) return;
+      const location = eventLocations.get(event.target.closest('.event-block'));
+      if (location) { selectedEvent = location.index; selectedSequence = location.sequence; }
+      if (selectedEvent >= 0) { event.preventDefault(); removeEvent(); }
+    }, true);
+    elements['stop-hotkey'].addEventListener('click', () => captureHotkey('stop'));
+    elements['stop-playback'].addEventListener('click', () => {
+      request('stop-playback').catch(error => notify(error.message, 'error'));
+    });
+    elements['save-recovered'].addEventListener('click', async () => {
+      if (saving) return;
+      saving = true;
+      try {
+        applyState(await request('save-recovered'));
+        applyRecoveryStatus({ images: elements['images-recovery'].textContent });
+      } catch (error) { notify(error.message, 'error'); }
+      finally { saving = false; }
+    });
+    elements['record-hotkey'].addEventListener('click', () => captureHotkey('record'));
+    elements['close-stop'].addEventListener('click', () => elements['stop-picker'].close());
+    elements['stop-picker'].addEventListener('close', cancelCapture);
+    elements['stop-picker'].addEventListener('cancel', event => event.preventDefault());
+    new MutationObserver(syncEditing).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['open'] });
+    function stateWithEditorMacro() {
+      if (recording || recordingPending) throw new Error('stop recording before saving.');
+      if (flowStep !== 'events') throw new Error('choose a macro name and type first.');
+      if (!state.stopKey) throw new Error('choose a stop hotkey first.');
+      const name = macroName;
+      if (!name || new TextEncoder().encode(name).length > 128) throw new Error('enter a name up to 128 bytes.');
+      if (!editorActions.length) throw new Error('add or record at least one event.');
+      const savedActions = macros.find(macro => macro.id === editingId)?.actions ?? [];
+      const actions = serializeEvents(editorActions, savedActions);
+      const next = nextState();
+      const id = editingId ?? Math.max(0, ...next.macros.map(macro => macro.id)) + 1;
+      const macro = { id, name, type: macroType, actions };
+      const index = next.macros.findIndex(value => value.id === id);
+      if (index < 0) next.macros.push(macro); else next.macros[index] = macro;
+      return next;
+    }
+
+    function serializeEvents(sequence, savedActions) {
+      return sequence.map((action, index) => {
+        function invalid(error) {
+          selectEvent(index, false, sequence)?.scrollIntoView({ block: 'nearest' });
+          throw new Error(`${eventTypes[action.type].name}: ${error}`);
+        }
+        if (action.condition) {
+          const error = conditionTypes[action.condition.type].error(action.condition, savedActions);
+          if (error) invalid(error);
+          const content = Object.fromEntries(branches(action.type).map(([branch]) => [branch, serializeEvents(action[branch], savedActions)]));
+          return { type: action.type, condition: { ...action.condition }, ...content };
+        }
+        const { holdRange, delayRange, ...event } = action;
+        const rangeKey = durationRangeKey(action);
+        const range = rangeKey && action[rangeKey];
+        if (range) {
+          if (!validDuration(range.min) || !validDuration(range.max) || range.min > range.max)
+            invalid('durations must be between 0 and 60000 ms, with the minimum at or below the maximum.');
+          if (!validDuration(event.duration)) event.duration = 0;
+          event[rangeKey] = { ...range };
+        } else if (!validDuration(action.duration)) invalid('duration must be between 0 and 60000 ms.');
+        if (action.type === 'text' && (!action.text || action.text.length > 65536)) invalid('enter between 1 and 65536 text characters.');
+        if (usesImage(action)) {
+          const error = imageError(action, savedActions);
+          if (error) invalid(error);
+        }
+        if (((action.type === 'move' && !usesImage(action)) || action.positioned) && ['x', 'y'].some(axis => !Number.isInteger(action[axis]) || action[axis] < -2147483648 || action[axis] > 2147483647)) invalid('enter valid mouse coordinates.');
+        if (action.type !== 'move') return event;
+        if (usesImage(action)) return { type: action.type, duration: action.duration, destination: action.destination, imageId: action.imageId };
+        const { destination, imageId, ...move } = action;
+        return move;
+      });
+    }
+
+    elements['macro-form'].addEventListener('submit', async event => {
+      event.preventDefault();
+      try {
+        await commit(stateWithEditorMacro());
+        await closeEditor();
+        notify('macro saved.', 'success');
+      } catch (error) { notify(error.message, 'error'); }
+    });
+    elements['close-macros'].addEventListener('click', () => elements.macros.close());
+    elements.macros.addEventListener('click', event => {
+      const bounds = elements.macros.getBoundingClientRect();
+      if (event.target === elements.macros && (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom)) elements.macros.close();
+    });
+    elements.remove.addEventListener('click', async () => {
+      const next = nextState();
+      next.bindings = next.bindings.filter(binding => !selectedKeys.has(binding.key));
+      try { await commit(next); elements.assign.focus(); notify('selected assignments removed.'); }
+      catch (error) { notify(error.message, 'error'); }
+    });
+    renderKeyboard();
+    Promise.all([request('state'), request('image-library'), native ? request('recovery-status') : {}]).then(([next, library, recovery]) => {
+      applyState(next);
+      applyImages(library);
+      applyRecoveryStatus(recovery);
+      return native && request('ready');
+    }).catch(error => notify(error.message, 'error'));
+  </script>
+</body>
+</html>

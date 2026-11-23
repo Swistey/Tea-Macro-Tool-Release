@@ -1,0 +1,103 @@
+name: Windows build and package
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Build and test
+        shell: pwsh
+        run: |
+          cmake -S . -B build/tests -G "Visual Studio 17 2022" -A x64 -DBUILD_TESTING=ON
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/tests --config Release --parallel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ctest --test-dir build/tests -C Release -LE desktop --output-on-failure --no-tests=error --parallel 4
+
+      - name: Build release candidate
+        shell: pwsh
+        run: |
+          cmake -S . -B build/release -G "Visual Studio 17 2022" -A x64 -DBUILD_TESTING=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/release --config Release --parallel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cpack --config build/release/CPackConfig.cmake -C Release -B build/packages
+
+      - name: Verify release candidate
+        shell: pwsh
+        run: |
+          $archives = @(Get-ChildItem -LiteralPath build/packages -Filter '*.zip' -File)
+          if ($archives.Count -ne 1) { throw 'Expected one release ZIP.' }
+          $archive = $archives[0]
+          $expectedHash = ((Get-Content -LiteralPath "$($archive.FullName).sha256" -Raw).Trim() -split '\s+')[0]
+          if ((Get-FileHash -LiteralPath $archive.FullName -Algorithm SHA256).Hash -ne $expectedHash) {
+            throw 'The release ZIP checksum does not match.'
+          }
+          $entries = cmake -E tar tf $archive.FullName
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $required = 'tea.exe', 'WebView2Loader.dll', 'LICENSE', 'licenses/webview2-license.txt',
+                      'licenses/webview2-notice.txt', 'licenses/jetbrains-mono.txt', 'licenses/nlohmann-json.txt'
+          foreach ($entry in $required) {
+            if ("$($archive.BaseName)/$entry" -notin $entries) { throw "Missing $entry in the release ZIP." }
+          }
+          $unpacked = Join-Path $env:RUNNER_TEMP 'tea-release'
+          Expand-Archive -LiteralPath $archive.FullName -DestinationPath $unpacked
+          $executable = Join-Path $unpacked "$($archive.BaseName)/tea.exe"
+          $profile = Join-Path $env:RUNNER_TEMP 'tea-package-profile'
+          $process = Start-Process -FilePath $executable -ArgumentList "--verify-install `"$profile`"" -WindowStyle Hidden -PassThru
+          if (!$process.WaitForExit(30000)) {
+            Stop-Process -Id $process.Id
+            throw 'The packaged executable timed out.'
+          }
+          if ($process.ExitCode -ne 0) {
+            $trace = Join-Path $profile 'trace.txt'
+            if (Test-Path -LiteralPath $trace) { Get-Content -LiteralPath $trace }
+            throw "The packaged executable failed to start (exit $($process.ExitCode))."
+          }
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tea-windows-x64-release-candidate
+          path: |
+            build/packages/*.zip
+            build/packages/*.zip.sha256
+          if-no-files-found: error
+
+  mingw-x64:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2.33.0
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+
+      - name: Build and test with g++
+        shell: msys2 {0}
+        run: |
+          cmake -S . -B build/gcc -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+          cmake --build build/gcc --parallel
+          ctest --test-dir build/gcc -L '^unit$' --output-on-failure --no-tests=error --parallel 4
